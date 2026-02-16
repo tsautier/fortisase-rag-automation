@@ -1,0 +1,169 @@
+locals {
+
+  # Set app estricted categories to block
+  app_restricted_categories = [
+    for category in local.app_categories_all_monitor : (
+      contains(var.app_restricted_categories, category.category.primary_key)
+      ? merge(category, { action = "block" })
+      : category
+    )
+  ]
+
+  # All app categories are set to monitor
+  app_categories_all_monitor = [
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "P2P"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "VoIP"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Video/Audio"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Proxy"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Remote.Access"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Game"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "General.Interest"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Network.Service"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Update"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Email"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Storage.Backup"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Social.Media"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Web.Client"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Operational.Technology"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Collaboration"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Business"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Cloud.IT"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Mobile"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "Unknown Applications"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "IoT"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "OT"
+      }
+    },
+    {
+      action = "monitor",
+      category = {
+        datasource  = "security/application-categories",
+        primary_key = "GenAI"
+      }
+    }
+  ]
+}

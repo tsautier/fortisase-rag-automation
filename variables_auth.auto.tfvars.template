@@ -1,0 +1,4 @@
+  idp_entity_id   = "https://sts.windows.net/id/"
+  idp_sign_on_url = "https://login.microsoftonline.com/id/saml2"
+  idp_log_out_url = "https://login.microsoftonline.com/id/saml2"
+  idp_certificate = "server"

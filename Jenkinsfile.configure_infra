@@ -1,0 +1,44 @@
+pipeline {
+
+    agent any
+
+    options { 
+        buildDiscarder(logRotator(numToKeepStr: '300'))
+        ansiColor('xterm')  /* This requires AnsiColor plugin */
+    }
+
+    stages {
+        stage('Configure FortiSASE') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'fortisase-creds', 
+                                        usernameVariable: 'TF_USER', 
+                                        passwordVariable: 'TF_PASS')]) {
+                        sh '''
+                            ##########
+                            ########## Note this is just for using an internal build. For regular releases please skip this block
+                            version=1.1.0
+                            os_arch="linux_amd64"
+                            mkdir -p ~/.terraform.d/plugins/fortinet.com/fortinetdev/fortisase/$version/$os_arch
+                            cp /opt/terraform-provider-fortisase ~/.terraform.d/plugins/fortinet.com/fortinetdev/fortisase/$version/$os_arch
+                            chmod 755 ~/.terraform.d/plugins/fortinet.com/fortinetdev/fortisase/$version/$os_arch/terraform-provider-fortisase
+                            ##########
+                            ##########   
+
+                            export TF_VAR_username=$TF_USER
+                            export TF_VAR_password=$TF_PASS
+                            terraform init
+                            terraform apply -auto-approve                          
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+                archiveArtifacts artifacts: '**/*',
+                allowEmptyArchive: true
+        }
+    }
+}

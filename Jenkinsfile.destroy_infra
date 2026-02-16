@@ -1,0 +1,38 @@
+pipeline {
+
+    agent any
+
+    options { 
+        buildDiscarder(logRotator(numToKeepStr: '300'))
+        ansiColor('xterm')  /* This requires AnsiColor plugin */
+    }
+
+    stages {
+        /* Note this requires "Copy Artifact" plugin installed */
+        stage('Restore tfstate from "configure infra" job') {
+            steps {
+                copyArtifacts(
+                    projectName: 'dev - FortiSASE Automation Telefonica - configure infra',
+                    selector: lastCompleted(),
+                    filter: '**/*',
+                    fingerprintArtifacts: true
+                )
+            }
+        }        
+        stage('Destroy FortiSASE') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'fortisase-creds', 
+                                        usernameVariable: 'TF_USER', 
+                                        passwordVariable: 'TF_PASS')]) {
+                        sh '''
+                            export TF_VAR_username=$TF_USER
+                            export TF_VAR_password=$TF_PASS
+                            terraform destroy -auto-approve                   
+                        '''
+                    }
+                }
+            }
+        }
+    }
+}
