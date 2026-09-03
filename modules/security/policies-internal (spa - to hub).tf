@@ -1,15 +1,15 @@
-resource "fortisase_security_internal_policies" "BOR_SPA_iOT" {
+resource "fortisase_security_internal_policy" "BOR_SPA_iOT" {
   primary_key = "BOR_SPA_iOT"
   enabled     = true
   scope       = "specify"
   users       = []
   destinations = [
     {
-      primary_key = fortisase_network_host_groups.bor_hosts.primary_key
+      primary_key = fortisase_network_host_group.bor_hosts.primary_key
       datasource  = "network/host-groups"
     },
     {
-      primary_key = fortisase_network_host_groups.spa_hosts.primary_key
+      primary_key = fortisase_network_host_group.spa_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -31,7 +31,7 @@ resource "fortisase_security_internal_policies" "BOR_SPA_iOT" {
   }
   sources = [
     {
-      primary_key = fortisase_network_host_groups.ot_hosts.primary_key
+      primary_key = fortisase_network_host_group.ot_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -43,14 +43,14 @@ resource "fortisase_security_internal_policies" "BOR_SPA_iOT" {
 }
 
 
-resource "fortisase_security_internal_policies" "Agent_to_agent_non_compliant" {
+resource "fortisase_security_internal_policy" "Agent_to_agent_non_compliant" {
   primary_key = "Agent_to_agent_non_compliant"
   enabled     = true
   scope       = "vpn-user"
   users       = []
   destinations = [
     {
-      primary_key = fortisase_network_host_groups.ipam_hosts.primary_key
+      primary_key = fortisase_network_host_group.ipam_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -73,7 +73,7 @@ resource "fortisase_security_internal_policies" "Agent_to_agent_non_compliant" {
   sources = [
     {
       primary_key = var.tags.non_compliant
-      datasource  = "endpoint/ztna-tags"
+      datasource  = "endpoint/ztna-tag-rules"
     }
   ]
   schedule = {
@@ -84,19 +84,19 @@ resource "fortisase_security_internal_policies" "Agent_to_agent_non_compliant" {
 }
 
 
-resource "fortisase_security_internal_policies" "Agent_to_agent_compliant" {
+resource "fortisase_security_internal_policy" "Agent_to_agent_compliant" {
   primary_key = "Agent_to_agent_compliant"
   enabled     = true
   scope       = "vpn-user"
   users = [
     {
-      primary_key = fortisase_auth_user_groups.Marketing.primary_key
+      primary_key = fortisase_auth_user_group.Marketing.primary_key
       datasource  = "auth/user-groups"
     }
   ]
   destinations = [
     {
-      primary_key = fortisase_network_host_groups.ipam_hosts.primary_key
+      primary_key = fortisase_network_host_group.ipam_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -119,7 +119,7 @@ resource "fortisase_security_internal_policies" "Agent_to_agent_compliant" {
   sources = [
     {
       primary_key = var.tags.compliant
-      datasource  = "endpoint/ztna-tags"
+      datasource  = "endpoint/ztna-tag-rules"
     }
   ]
   schedule = {
@@ -130,18 +130,18 @@ resource "fortisase_security_internal_policies" "Agent_to_agent_compliant" {
 }
 
 
-resource "fortisase_security_internal_policies" "Agent_SPA_non_compliant" {
+resource "fortisase_security_internal_policy" "Agent_SPA_non_compliant" {
   primary_key = "Agent_SPA_non_compliant"
   enabled     = true
   scope       = "vpn-user"
   users       = []
   destinations = [
     {
-      primary_key = fortisase_network_host_groups.spa_hosts.primary_key
+      primary_key = fortisase_network_host_group.spa_hosts.primary_key
       datasource  = "network/host-groups"
     },
     {
-      primary_key = fortisase_network_host_groups.bor_hosts.primary_key
+      primary_key = fortisase_network_host_group.bor_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -164,7 +164,7 @@ resource "fortisase_security_internal_policies" "Agent_SPA_non_compliant" {
   sources = [
     {
       primary_key = var.tags.non_compliant
-      datasource  = "endpoint/ztna-tags"
+      datasource  = "endpoint/ztna-tag-rules"
     }
   ]
   schedule = {
@@ -175,23 +175,23 @@ resource "fortisase_security_internal_policies" "Agent_SPA_non_compliant" {
 }
 
 
-resource "fortisase_security_internal_policies" "Agent_SPA_compliant" {
+resource "fortisase_security_internal_policy" "Agent_SPA_compliant" {
   primary_key = "Agent_SPA_compliant"
   enabled     = true
   scope       = "vpn-user"
   users = [
     {
-      primary_key = fortisase_auth_user_groups.Marketing.primary_key
+      primary_key = fortisase_auth_user_group.Marketing.primary_key
       datasource  = "auth/user-groups"
     }
   ]
   destinations = [
     {
-      primary_key = fortisase_network_host_groups.spa_hosts.primary_key
+      primary_key = fortisase_network_host_group.spa_hosts.primary_key
       datasource  = "network/host-groups"
     },
     {
-      primary_key = fortisase_network_host_groups.bor_hosts.primary_key
+      primary_key = fortisase_network_host_group.bor_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -214,7 +214,7 @@ resource "fortisase_security_internal_policies" "Agent_SPA_compliant" {
   sources = [
     {
       primary_key = var.tags.compliant
-      datasource  = "endpoint/ztna-tags"
+      datasource  = "endpoint/ztna-tag-rules"
     }
   ]
   schedule = {

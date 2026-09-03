@@ -19,5 +19,5 @@ variable "idp_log_out_url" {
 variable "idp_certificate" {
   description = "Name of the identity provider certificate that is used in Auth SAML process"
   type        = string
-  # Example   = "server"
+  # Example   = "server_certificate"
 }

@@ -1,4 +1,4 @@
-resource "fortisase_endpoint_policies" "sse_standard" {
+resource "fortisase_endpoint_policy" "sse_standard" {
   primary_key                           = "SSE standard"
   enabled                               = true
   skip_off_net_profile_creation_on_edit = true
@@ -6,9 +6,9 @@ resource "fortisase_endpoint_policies" "sse_standard" {
 
 # Connection
 
-resource "fortisase_endpoint_connection_profiles" "sse_standard" {
-  primary_key = fortisase_endpoint_policies.sse_standard.primary_key
-  connect_to_forti_sase = "automatically"
+resource "fortisase_endpoint_connection_profile" "sse_standard" {
+  primary_key = fortisase_endpoint_policy.sse_standard.primary_key
+  connect_to_fortisase  = "automatically"
   show_disconnect_btn   = "enable"
   secure_internet_access = {
     authenticate_with_sso       = "enable"
@@ -25,8 +25,8 @@ resource "fortisase_endpoint_connection_profiles" "sse_standard" {
 
 # Protection
 
-resource "fortisase_endpoint_protection_profiles" "sse_standard" {
-  primary_key        = fortisase_endpoint_policies.sse_standard.primary_key
+resource "fortisase_endpoint_protection_profile" "sse_standard" {
+  primary_key        = fortisase_endpoint_policy.sse_standard.primary_key
   antivirus          = "disable"
   antiransomware     = "disable"
   vulnerability_scan = "enable"
@@ -39,13 +39,12 @@ resource "fortisase_endpoint_protection_profiles" "sse_standard" {
   automatic_vulnerability_patch_level = "medium"
   default_action                      = "monitor"
   notify_endpoint_of_blocks           = "enable"
-  depends_on = [ fortisase_endpoint_connection_profiles.sse_standard ]
 }
 
 # Sandbox
 
-resource "fortisase_endpoint_sandbox_profiles" "sse_standard" {
-  primary_key                      = fortisase_endpoint_policies.sse_standard.primary_key
+resource "fortisase_endpoint_sandbox_profile" "sse_standard" {
+  primary_key                      = fortisase_endpoint_policy.sse_standard.primary_key
   sandbox_mode                     = "FortiSASE"
   timeout_awaiting_sandbox_results = 300
   file_submission_options = {
@@ -67,8 +66,8 @@ resource "fortisase_endpoint_sandbox_profiles" "sse_standard" {
 
 # Forticlient GUI settings
 
-resource "fortisase_endpoint_setting_profiles" "sse_standard" {
-  primary_key             = fortisase_endpoint_policies.sse_standard.primary_key
+resource "fortisase_endpoint_setting_profile" "sse_standard" {
+  primary_key             = fortisase_endpoint_policy.sse_standard.primary_key
   allow_config_backup     = "disable"
   show_tag_forti_client   = "enable"
   show_notifications      = "disable"

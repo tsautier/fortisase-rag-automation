@@ -1,53 +1,46 @@
-resource "fortisase_endpoint_policy" "sse_strict" {
-  primary_key                           = "SSE strict"
-  enabled                               = true
-  skip_off_net_profile_creation_on_edit = true
-}
+# Note Default profile is built-in and has to be imported first.action
+# See /import.terraform
 
-# Connection
-
-resource "fortisase_endpoint_connection_profile" "sse_strict" {
-  primary_key = fortisase_endpoint_policy.sse_strict.primary_key
+resource "fortisase_endpoint_connection_profile" "Default" {
+  primary_key           = "Default"
   connect_to_fortisase  = "automatically"
   show_disconnect_btn   = "disable"
+
+  available_vpns = []
   secure_internet_access = {
     authenticate_with_sso       = "enable"
     external_browser_saml_login = "disable"
     allow_fido_auth             = "disable"
     failover_sequence           = []
+    enable_local_lan            = "enable"
     posture_check = {
       action               = "prohibit"
-      tag                  = fortisase_endpoint_ztna_tag_rule.non_compliant.primary_key
-      check_failed_message = "your endpoint is not compliant and therefore not allowed to connect to FortiSASE"
+      tag                  = fortisase_endpoint_ztna_tag_rule.compliant.primary_key
+      check_failed_message = "Your endpoint is not compliant and therefore not allowed to connect to FortiSASE"
     }
-    enable_local_lan = "enable"
   }
   on_fabric_rule_set = {
     datasource  = "endpoint/on-net-rules"
-    primary_key = ""
+    primary_key = fortisase_endpoint_on_net_rule.on_net.primary_key
   }
+  endpoint_on_net_bypass = true
 }
 
-# Protection
-
-resource "fortisase_endpoint_protection_profile" "sse_strict" {
-  primary_key    = fortisase_endpoint_policy.sse_strict.primary_key
-  antivirus      = "enable"
-  antiransomware = "enable"
-  antivirus_scan = "enable"
-  scheduled_antivirus_scan = {
-    scan_type = "quick"
-    repeat    = "daily"
-    time      = "00:00"
-  }
-  protected_folders_path = [
-    "%USERPROFILE%\\Documents\\",
-    "%USERPROFILE%\\Pictures\\"
-  ]
+resource "fortisase_endpoint_protection_profile" "Default" {
+  primary_key        = "Default"
+  antivirus          = "enable"
+  antiransomware     = "disable"
   vulnerability_scan = "enable"
   scheduled_scan = {
-    repeat = "daily"
+    repeat = "weekly"
     time   = "00:00"
+    day    = 1
+  }
+  antivirus_scan = "enable"
+  scheduled_antivirus_scan = {
+    scan_type = "full"
+    repeat    = "daily"
+    time      = "00:00"
   }
   event_based_scanning                = "enable"
   automatically_patch_vulnerabilities = "enable"
@@ -58,8 +51,8 @@ resource "fortisase_endpoint_protection_profile" "sse_strict" {
 
 # Sandbox
 
-resource "fortisase_endpoint_sandbox_profile" "sse_strict" {
-  primary_key                      = fortisase_endpoint_policy.sse_strict.primary_key
+resource "fortisase_endpoint_sandbox_profile" "Default" {
+  primary_key                      = "Default"
   sandbox_mode                     = "FortiSASE"
   timeout_awaiting_sandbox_results = 300
   file_submission_options = {
@@ -81,8 +74,8 @@ resource "fortisase_endpoint_sandbox_profile" "sse_strict" {
 
 # Forticlient GUI settings
 
-resource "fortisase_endpoint_setting_profile" "sse_strict" {
-  primary_key             = fortisase_endpoint_policy.sse_strict.primary_key
+resource "fortisase_endpoint_setting_profile" "Default" {
+  primary_key             = "Default"
   allow_config_backup     = "disable"
   show_tag_forti_client   = "enable"
   show_notifications      = "disable"

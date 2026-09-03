@@ -1,4 +1,4 @@
-resource "fortisase_security_endpoint_to_endpoint_policies" "Agent_to_agent_intra_POP" {
+resource "fortisase_security_endpoint_to_endpoint_policy" "Agent_to_agent_intra_POP" {
   primary_key = "Agent_to_agent_intra_POP"
   enabled     = true
   services = [
@@ -19,7 +19,7 @@ resource "fortisase_security_endpoint_to_endpoint_policies" "Agent_to_agent_intr
   sources = [
     {
       primary_key = var.tags.compliant
-      datasource  = "endpoint/ztna-tags"
+      datasource  = "endpoint/ztna-tag-rules"
     }
   ]
   schedule = {

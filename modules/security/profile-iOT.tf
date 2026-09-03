@@ -92,14 +92,14 @@ resource "fortisase_security_application_control_profile" "iOT" {
   network_protocol_enforcement        = "disable"
   network_protocols                   = []
   block_non_default_port_applications = "disable"
-  # TODO: Review next setting: It doesn't set value properly. Bug reported, pending to be fixed
   controls = [{
     action     = "monitor"
     behavior   = ""
     technology = ""
     vendor     = ""
-    popularity = ""
+    risk       = []
     protocols  = ""
+    popularity = [1,2,3,4,5]
     categories = [{
       datasource  = "security/application-categories"
       primary_key = "VoIP"

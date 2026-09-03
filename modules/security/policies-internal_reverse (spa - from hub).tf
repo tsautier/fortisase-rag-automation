@@ -1,4 +1,4 @@
-resource "fortisase_security_internal_reverse_policies" "Agent_to_BOR" {
+resource "fortisase_security_internal_reverse_policy" "Agent_to_BOR" {
   primary_key = "Agent_to_BOR"
   enabled     = true
   scope       = "thin-edge"
@@ -20,7 +20,7 @@ resource "fortisase_security_internal_reverse_policies" "Agent_to_BOR" {
   }
   sources = [
     {
-      primary_key = fortisase_network_host_groups.ipam_hosts.primary_key
+      primary_key = fortisase_network_host_group.ipam_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -31,7 +31,7 @@ resource "fortisase_security_internal_reverse_policies" "Agent_to_BOR" {
   comments = "Access to SPA and BOR resources for iOT devices connected present in BOR locations"
 }
 
-resource "fortisase_security_internal_reverse_policies" "Agent_to_agent" {
+resource "fortisase_security_internal_reverse_policy" "Agent_to_agent" {
   primary_key = "Agent_to_agent"
   enabled     = true
   scope       = "vpn-user"
@@ -54,7 +54,7 @@ resource "fortisase_security_internal_reverse_policies" "Agent_to_agent" {
   }
   sources = [
     {
-      primary_key = fortisase_network_host_groups.ipam_hosts.primary_key
+      primary_key = fortisase_network_host_group.ipam_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]
@@ -65,7 +65,7 @@ resource "fortisase_security_internal_reverse_policies" "Agent_to_agent" {
   comments = "Access to SPA and BOR resources for iOT devices connected present in BOR locations"
 }
 
-resource "fortisase_security_internal_reverse_policies" "SPA_to_BOR" {
+resource "fortisase_security_internal_reverse_policy" "SPA_to_BOR" {
   primary_key = "SPA_to_BOR"
   enabled     = true
   scope       = "thin-edge"
@@ -88,7 +88,7 @@ resource "fortisase_security_internal_reverse_policies" "SPA_to_BOR" {
   }
   sources = [
     {
-      primary_key = fortisase_network_host_groups.spa_hosts.primary_key
+      primary_key = fortisase_network_host_group.spa_hosts.primary_key
       datasource  = "network/host-groups"
     }
 
@@ -101,7 +101,7 @@ resource "fortisase_security_internal_reverse_policies" "SPA_to_BOR" {
 }
 
 
-resource "fortisase_security_internal_reverse_policies" "SPA_to_agents" {
+resource "fortisase_security_internal_reverse_policy" "SPA_to_agents" {
   primary_key = "SPA_to_agents"
   enabled     = true
   scope       = "vpn-user"
@@ -124,11 +124,11 @@ resource "fortisase_security_internal_reverse_policies" "SPA_to_agents" {
   }
   sources = [
     {
-      primary_key = fortisase_network_host_groups.spa_hosts.primary_key
+      primary_key = fortisase_network_host_group.spa_hosts.primary_key
       datasource  = "network/host-groups"
     },
     {
-      primary_key = fortisase_network_host_groups.bor_hosts.primary_key
+      primary_key = fortisase_network_host_group.bor_hosts.primary_key
       datasource  = "network/host-groups"
     }
   ]

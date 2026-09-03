@@ -1,4 +1,4 @@
-resource "fortisase_endpoint_policies" "sase_strict" {
+resource "fortisase_endpoint_policy" "sase_strict" {
   primary_key                           = "SASE strict"
   enabled                               = true
   skip_off_net_profile_creation_on_edit = true
@@ -6,8 +6,8 @@ resource "fortisase_endpoint_policies" "sase_strict" {
 
 # Connection
 
-resource "fortisase_endpoint_connection_profiles" "sase_strict" {
-  primary_key = fortisase_endpoint_policies.sase_strict.primary_key
+resource "fortisase_endpoint_connection_profile" "sase_strict" {
+  primary_key = fortisase_endpoint_policy.sase_strict.primary_key
   lockdown = {
     grace_period = 600
     detect_captive_portal = {
@@ -15,7 +15,7 @@ resource "fortisase_endpoint_connection_profiles" "sase_strict" {
     }
     status = "enable"
   }
-  connect_to_forti_sase = "automatically"
+  connect_to_fortisase  = "automatically"
   show_disconnect_btn   = "disable"
   secure_internet_access = {
     authenticate_with_sso       = "enable"
@@ -24,22 +24,22 @@ resource "fortisase_endpoint_connection_profiles" "sase_strict" {
     failover_sequence           = []
     posture_check = {
       action               = "prohibit"
-      tag                  = fortisase_endpoint_ztna_tags.non_compliant.primary_key
+      tag                  = fortisase_endpoint_ztna_tag_rule.non_compliant.primary_key
       check_failed_message = "your endpoint is not compliant and therefore not allowed to connect to FortiSASE"
     }
     enable_local_lan = "enable"
   }
   on_fabric_rule_set = {
     datasource  = "endpoint/on-net-rules"
-    primary_key = fortisase_endpoint_on_net_rules.on_net.primary_key
+    primary_key = fortisase_endpoint_on_net_rule.on_net.primary_key
   }
   endpoint_on_net_bypass = true
 }
 
 # Protection
 
-resource "fortisase_endpoint_protection_profiles" "sase_strict" {
-  primary_key    = fortisase_endpoint_policies.sase_strict.primary_key
+resource "fortisase_endpoint_protection_profile" "sase_strict" {
+  primary_key    = fortisase_endpoint_policy.sase_strict.primary_key
   antivirus      = "enable"
   antiransomware = "enable"
   antivirus_scan = "enable"
@@ -62,13 +62,12 @@ resource "fortisase_endpoint_protection_profiles" "sase_strict" {
   automatic_vulnerability_patch_level = "medium"
   default_action                      = "monitor"
   notify_endpoint_of_blocks           = "enable"
-  depends_on = [ fortisase_endpoint_connection_profiles.sase_strict ]
 }
 
 # Sandbox
 
-resource "fortisase_endpoint_sandbox_profiles" "sase_strict" {
-  primary_key                      = fortisase_endpoint_policies.sase_strict.primary_key
+resource "fortisase_endpoint_sandbox_profile" "sase_strict" {
+  primary_key                      = fortisase_endpoint_policy.sase_strict.primary_key
   sandbox_mode                     = "FortiSASE"
   timeout_awaiting_sandbox_results = 300
   file_submission_options = {
@@ -90,8 +89,8 @@ resource "fortisase_endpoint_sandbox_profiles" "sase_strict" {
 
 # Forticlient GUI settings
 
-resource "fortisase_endpoint_setting_profiles" "sase_strict" {
-  primary_key             = fortisase_endpoint_policies.sase_strict.primary_key
+resource "fortisase_endpoint_setting_profile" "sase_strict" {
+  primary_key             = fortisase_endpoint_policy.sase_strict.primary_key
   allow_config_backup     = "disable"
   show_tag_forti_client   = "enable"
   show_notifications      = "disable"

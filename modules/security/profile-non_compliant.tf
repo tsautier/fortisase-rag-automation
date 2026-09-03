@@ -74,17 +74,6 @@ resource "fortisase_security_ssl_ssh_profile" "non_compliant" {
   }
 }
 
-locals {
-  restricted_sites = [
-    for site in var.webfilter_restricted_sites : {
-      action = "block"
-      status = "enable"
-      type   = "simple"
-      url    = site
-    }
-  ]
-}
-
 resource "fortisase_security_web_filter_profile" "non_compliant" {
   primary_key             = fortisase_security_profile_group.non_compliant.primary_key
   use_fortiguard_filters  = "enable"
@@ -96,6 +85,7 @@ resource "fortisase_security_web_filter_profile" "non_compliant" {
   fortiguard_filters      = local.fgd_restricted_categories
 }
 
+# Need mechanism to enable profile
 resource "fortisase_security_dlp_profile" "non_compliant" {
   primary_key = fortisase_security_profile_group.non_compliant.primary_key
   dlp_rules   = []
@@ -137,6 +127,15 @@ resource "fortisase_security_dns_filter_profile" "non_compliant" {
   domain_threat_feed_filters         = []
 }
 
+locals {
+  critical_apps = [
+    for app in var.app_critical_apps : {
+        primary_key = app
+        datasource  = "security/applications"
+      }
+  ]
+}
+
 # To configure this resource, please disable proxy configuration.
 resource "fortisase_security_application_control_profile" "non_compliant" {
   primary_key                         = fortisase_security_profile_group.non_compliant.primary_key
@@ -144,18 +143,12 @@ resource "fortisase_security_application_control_profile" "non_compliant" {
   network_protocol_enforcement        = "disable"
   network_protocols                   = []
   block_non_default_port_applications = "disable"
-  # TODO: Review next setting: It doesn't set value properly. Bug reported, pending to be fixed
   controls = [{
-    action     = "monitor"
-    behavior   = ""
-    technology = ""
-    vendor     = ""
-    popularity = ""
-    protocols  = ""
-    categories = [{
-      datasource  = "security/application-categories"
-      primary_key = "VoIP"
-    }]
+    action     = "block"
+    categories = []
+    risk       = []
+    applications = local.critical_apps
+    popularity = [1, 2, 3, 4, 5]
   }]
 }
 

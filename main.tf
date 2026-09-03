@@ -30,8 +30,6 @@ module "endpoint" {
   on_net_known_local_subnet = var.on_net_known_local_subnet
 }
 
-
-
 module "security" {
   source                          = "./modules/security"
   username                        = var.username

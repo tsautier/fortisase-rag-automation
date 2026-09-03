@@ -1,38 +1,35 @@
-resource "fortisase_endpoint_ztna_tags" "compliant" {
+resource "fortisase_endpoint_ztna_tag_rule" "compliant" {
   primary_key = "compliant"
-}
-
-# Rules
-
-resource "fortisase_endpoint_ztna_rules" "compliant" {
-  primary_key = fortisase_endpoint_ztna_tags.compliant.primary_key
   status      = "enable"
+  description = "Tag for devices compliant with the defined security posture, allowing them to access more resources and services."
   rules = [
     {
       content = "AV Software is installed and running"
       id      = 1
-      negated = false
+      #negated = false
       os      = "windows"
       type    = "anti-virus"
     },
     {
       content = "FortiClient installed and Telemetry connected to EMS"
       id      = 2
-      os      = "windows"
-      type    = "ems-management"
+      # negated = false
+      os   = "windows"
+      type = "ems-management"
     },
     {
       content = "AV Software is installed and running"
       id      = 3
-      negated = false
+      #negated = false
       os      = "macos"
       type    = "anti-virus"
     },
     {
       content = "FortiClient installed and Telemetry connected to EMS"
       id      = 4
-      os      = "macos"
-      type    = "ems-management"
+      # negated = false
+      os   = "macos"
+      type = "ems-management"
     }
   ]
   logic = {
@@ -58,13 +55,5 @@ resource "fortisase_endpoint_ztna_rules" "compliant" {
         }
       ]
     })
-    linux   = ""
-    ios     = ""
-    android = ""
-  }
-
-  tag = {
-    datasource  = "endpoint/ztna-tags"
-    primary_key = fortisase_endpoint_ztna_tags.compliant.primary_key
   }
 }

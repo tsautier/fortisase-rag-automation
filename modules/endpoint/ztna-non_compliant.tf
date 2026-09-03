@@ -1,11 +1,7 @@
-resource "fortisase_endpoint_ztna_tags" "non_compliant" {
+resource "fortisase_endpoint_ztna_tag_rule" "non_compliant" {
   primary_key = "non_compliant"
-}
-
-# Rules
-resource "fortisase_endpoint_ztna_rules" "non_compliant" {
-  primary_key = fortisase_endpoint_ztna_tags.non_compliant.primary_key
   status      = "enable"
+  description = "Tag for devices non-compliant with the defined security posture, restricting their access to resources and services to minimize potential risks."
   rules = [
     {
       content = "AV Software is installed and running"
@@ -17,7 +13,7 @@ resource "fortisase_endpoint_ztna_rules" "non_compliant" {
     {
       content = "Critical"
       id      = 2
-      negated = false
+      # negated = false
       os      = "windows"
       type    = "vulnerable-devices"
     },
@@ -31,7 +27,7 @@ resource "fortisase_endpoint_ztna_rules" "non_compliant" {
     {
       content = "Critical"
       id      = 4
-      negated = false
+      # negated = false
       os      = "macos"
       type    = "vulnerable-devices"
     }
@@ -59,13 +55,5 @@ resource "fortisase_endpoint_ztna_rules" "non_compliant" {
         }
       ]
     })
-    linux   = ""
-    ios     = ""
-    android = ""
-  }
-
-  tag = {
-    datasource  = "endpoint/ztna-tags"
-    primary_key = fortisase_endpoint_ztna_tags.non_compliant.primary_key
   }
 }

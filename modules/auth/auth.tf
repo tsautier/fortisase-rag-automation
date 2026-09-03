@@ -9,7 +9,7 @@ resource "fortisase_auth_vpn_saml_server" "sase-global" {
   # Note the certificate must be uploaded in advance
   idp_certificate = {
     datasource  = "system/certificate/remote-certificates"
-    primary_key = var.idp_certificate
+    primary_key = fortisase_system_certificate.remote_cert.primary_key
   }
   username         = "username"
   group_name       = "group"

@@ -1,0 +1,304 @@
+pipeline {
+
+    agent any
+
+    parameters {
+        // ─────────────────────────────────────────────────────────────────────
+        // ⚠  TEMPORARY JENKINS EXECUTION PARAMETERS  ⚠
+        //
+        // These parameters allow manual job runs with specific values without
+        // modifying code. They are NOT the canonical way to configure the env.
+        //
+        // THE CORRECT WAY is to define values in a *.auto.tfvars file at the
+        // repository root (git-ignored via .gitignore). Terraform loads it
+        // automatically. Use these parameters only for one-off tests or to
+        // override values in specific CI runs.
+        // ─────────────────────────────────────────────────────────────────────
+
+        string(name: 'TF_VAR_BGP',
+               defaultValue: '{"bgp_design":"loopback","bgp_rid_subnet":"10.200.6.130/28","asn":"63000","hc_ip":"10.110.100.2","bypass":false}',
+               description: '')
+
+        string(name: 'TF_VAR_SC',
+               defaultValue: '[{"name":"H1","backup_link":false,"ipsec_remote_gw":["37.174.33.245","37.144.252.244"],"overlay_network_id":["11","12"],"route_map_tag":"1","bgp_peer_ip":"10.120.2.232","priority":1},{"name":"H2","backup_link":false,"ipsec_remote_gw":["37.164.13.53","37.145.23.123"],"overlay_network_id":["21","22"],"route_map_tag":"2","bgp_peer_ip":"10.222.2.123","priority":2}]',
+               description: '')
+
+        string(name: 'TF_VAR_idp_entity_id',
+               defaultValue: 'https://sts.windows.net/id/',
+               description: '')
+
+        string(name: 'TF_VAR_idp_sign_on_url',
+               defaultValue: 'https://login.microsoftonline.com/id/saml2',
+               description: '')
+
+        string(name: 'TF_VAR_idp_log_out_url',
+               defaultValue: 'https://login.microsoftonline.com/id/saml2',
+               description: '')
+
+        string(name: 'TF_VAR_idp_certificate',
+               defaultValue: 'server_certificate',
+               description: '')
+
+        string(name: 'TF_VAR_ipsec_pre_shared_key',
+               defaultValue: 'xxxxxxx',
+               description: '')
+
+        string(name: 'TF_VAR_on_net_known_public_ips',
+               defaultValue: '["1.2.3.4","1.2.3.40"]',
+               description: '')
+
+        string(name: 'TF_VAR_on_net_known_local_subnet',
+               defaultValue: '["10.1.1.1/24","10.1.1.1/16"]',
+               description: '')
+
+        string(name: 'TF_VAR_webfilter_restricted_categories',
+               defaultValue: '["Gambling"]',
+               description: '')
+
+        string(name: 'TF_VAR_webfilter_restricted_sites',
+               defaultValue: '["nytimes.com","casino.com"]',
+               description: '')
+
+        string(name: 'TF_VAR_app_restricted_categories',
+               defaultValue: '["Social.Media"]',
+               description: '')
+
+        string(name: 'TF_VAR_app_critical_apps',
+               defaultValue: '["Github","Amazon.AWS","Microsoft.365","Salesforce"]',
+               description: '')
+
+        string(name: 'TF_VAR_spa_resources',
+               defaultValue: '["10.1.0.5/32","10.2.0.4/24","10.3.0.0/8"]',
+               description: '')
+
+        string(name: 'TF_VAR_bor_resources',
+               defaultValue: '["10.1.1.0/24","10.1.2.0/24"]',
+               description: '')
+
+        string(name: 'TF_VAR_ot_resources',
+               defaultValue: '["10.4.1.101/32"]',
+               description: '')
+
+        string(name: 'TF_VAR_auth_resources',
+               defaultValue: '["10.7.0.1/32","10.7.0.2/32"]',
+               description: '')
+
+        string(name: 'TF_VAR_ipam_resources',
+               defaultValue: '["10.0.0.0/8","172.16.0.0/24"]',
+               description: '')
+
+        // Recipient of the end-of-build notification. Leave it empty to disable
+        // the e-mail. Several addresses can be given separated by commas.
+        string(name: 'NOTIFICATION_EMAIL',
+               defaultValue: 'youremailhere',
+               description: 'Address to notify when the build finishes (empty = no e-mail)')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '300'))
+        ansiColor('xterm')
+        // Checkout is done by the 'Clean Workspace' stage, after wiping the workspace.
+        skipDefaultCheckout(true)
+    }
+    triggers {
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: false, secretToken: '', branchFilterType: 'All')
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                script {
+                    // Every job starts from scratch: drop the state, .terraform, the lock
+                    // file and any leftovers from previous runs (none of that is in git).
+                    def wiped = true
+                    try {
+                        deleteDir()
+                    } catch (err) {
+                        wiped = false
+                        echo "Workspace wipe failed (${err}). Falling back to clean_tf_state.sh"
+                    }
+
+                    checkout scm
+
+                    // Fallback: at least get rid of the terraform state and provider cache.
+                    if (!wiped) {
+                        sh './clean_tf_state.sh --yes'
+                    }
+                }
+            }
+        }
+        stage('Security Scan') {
+            steps {
+                warnError('Security scan failed. Continue...') {
+                    withCredentials([
+                        string(credentialsId: 'LW_ACCOUNT',    variable: 'LW_ACCOUNT'),
+                        string(credentialsId: 'LW_API_KEY',    variable: 'LW_API_KEY'),
+                        string(credentialsId: 'LW_API_SECRET', variable: 'LW_API_SECRET'),
+                        string(credentialsId: 'LW_SUBACCOUNT', variable: 'LW_SUBACCOUNT')
+                    ]) {
+                        sh '''
+                            docker run --rm \
+                                -e LW_ACCOUNT="${LW_ACCOUNT}" \
+                                -e LW_API_KEY="${LW_API_KEY}" \
+                                -e LW_API_SECRET="${LW_API_SECRET}" \
+                                -e LW_SUBACCOUNT="${LW_SUBACCOUNT}" \
+                                -v "${WORKSPACE}:/app/src" \
+                                lacework/codesec:stable \
+                                lacework iac scan --directory=.
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Install Terraform Provider') {
+            steps {
+                sh '''
+                    set -e
+                    os_arch="linux_amd64"
+
+                    # Single source of truth: the version pinned in providers.tf (e.g. 1.1.0-b0066).
+                    # The build number is the "-bNNNN" suffix of that version.
+                    version=$(sed -n 's/.*version *= *"\\(.*\\)".*/\\1/p' providers.tf | head -1)
+                    build=${version##*-b}
+                    if [ -z "$version" ] || [ "$build" = "$version" ]; then
+                        echo "Could not parse a 'X.Y.Z-bNNNN' provider version from providers.tf (got: '$version')"
+                        exit 1
+                    fi
+                    echo "Using provider version: $version (build $build)"
+
+                    binary="terraform-provider-fortisase_v1-build${build}_linux_amd64_v1"
+                    dest=~/.terraform.d/plugins/fortinet.com/fortinetdev/fortisase/$version/$os_arch
+                    rm -r -f "$dest"
+                    mkdir -p "$dest"
+                    cp /opt/terraform_builds/$binary "$dest/$binary"
+                    chmod 755 "$dest/$binary"
+                '''
+            }
+        }
+        stage('Terraform Init') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+        stage('Clean up FortiSASE instance') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'fortisase-creds',
+                                    usernameVariable: 'TF_USER',
+                                    passwordVariable: 'TF_PASS')]) {
+                    script {
+                        def rc = sh(returnStatus: true, script: '''
+                            export TF_VAR_username=$TF_USER
+                            export TF_VAR_password=$TF_PASS
+                            ./api/delete_all.py
+                        ''')
+                        // Exit code 3 (EXIT_NOT_DELETED) means a resource that is not
+                        // built-in survived the clean up, so the instance is dirty and
+                        // there is no point in applying on top of it.
+                        if (rc == 3) {
+                            error('Clean up left undeleted resources behind. Aborting.')
+                        } else if (rc != 0) {
+                            unstable("Clean up failed (exit ${rc}). Continue...")
+                        }
+                    }
+                }
+            }
+        }
+        stage('Wait before Apply') {
+            steps {
+                sleep(time: 30, unit: 'SECONDS')
+            }
+        }
+        stage('Apply') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'fortisase-creds',
+                                    usernameVariable: 'TF_USER',
+                                    passwordVariable: 'TF_PASS')]) {
+                    sh '''
+                        export TF_VAR_username=$TF_USER
+                        export TF_VAR_password=$TF_PASS
+                        terraform apply -auto-approve
+                    '''
+                }
+            }
+        }
+        stage('Wait before Destroy') {
+            steps {
+                sleep(time: 30, unit: 'SECONDS')
+            }
+        }
+        stage('Generate Test Results') {
+            steps {
+                warnError('Test results generation failed. Continue...') {
+                    sh './check_created_resources.py || true'
+                    archiveArtifacts artifacts: '**/test_results.*',
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+        stage('Destroy') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'fortisase-creds',
+                                    usernameVariable: 'TF_USER',
+                                    passwordVariable: 'TF_PASS')]) {
+                    sh '''
+                        export TF_VAR_username=$TF_USER
+                        export TF_VAR_password=$TF_PASS
+                        terraform destroy -auto-approve
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            junit allowEmptyResults: true, testResults: '**/test_results.xml'
+            archiveArtifacts artifacts: '**/*', allowEmptyArchive: true
+
+            script {
+                // Pipeline jobs have no "post-build actions" in the GUI, so the
+                // notification is declared here. It needs an SMTP server set in
+                // Manage Jenkins → System (E-mail Notification section).
+                def recipient = (params.NOTIFICATION_EMAIL ?: '').trim()
+                if (!recipient) {
+                    echo 'NOTIFICATION_EMAIL is empty: no notification sent.'
+                    return
+                }
+
+                // currentResult is SUCCESS, UNSTABLE, FAILURE or ABORTED.
+                // (currentBuild.result is still null here on a good run.)
+                def status  = currentBuild.currentResult
+                def subject = "[${status}] ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                def body    = """\
+                    |Job:      ${env.JOB_NAME}
+                    |Build:    #${env.BUILD_NUMBER}
+                    |Result:   ${status}
+                    |Branch:   ${env.GIT_BRANCH ?: env.BRANCH_NAME ?: '-'}
+                    |Commit:   ${env.GIT_COMMIT ?: '-'}
+                    |Duration: ${currentBuild.durationString.replace(' and counting', '')}
+                    |
+                    |Build       : ${env.BUILD_URL}
+                    |Console log : ${env.BUILD_URL}console
+                    |Test report : ${env.BUILD_URL}testReport
+                    |""".stripMargin()
+
+                // A mail failure must not turn a good build red: just report it.
+                try {
+                    try {
+                        // Extended E-mail Notification plugin: ships the log too.
+                        // mimeType is forced to text/plain because the plugin's
+                        // global default may be HTML, which swallows newlines.
+                        emailext(to: recipient, subject: subject, body: body,
+                                 mimeType: 'text/plain',
+                                 attachLog: true, compressLog: true)
+                    } catch (NoSuchMethodError missingStep) {
+                        // Plugin not installed: fall back to the core Mailer step.
+                        mail(to: recipient, subject: subject, body: body)
+                    }
+                    echo "Notification sent to ${recipient}"
+                } catch (err) {
+                    echo "Could not send the notification e-mail (${err})"
+                }
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-resource "fortisase_endpoint_policies" "sase_standard" {
+resource "fortisase_endpoint_policy" "sase_standard" {
   primary_key                           = "SASE standard"
   enabled                               = true
   skip_off_net_profile_creation_on_edit = true
@@ -6,9 +6,9 @@ resource "fortisase_endpoint_policies" "sase_standard" {
 
 # Connection
 
-resource "fortisase_endpoint_connection_profiles" "sase_standard" {
-  primary_key           = fortisase_endpoint_policies.sase_standard.primary_key
-  connect_to_forti_sase = "automatically"
+resource "fortisase_endpoint_connection_profile" "sase_standard" {
+  primary_key           = fortisase_endpoint_policy.sase_standard.primary_key
+  connect_to_fortisase  = "automatically"
   show_disconnect_btn   = "enable"
   secure_internet_access = {
     authenticate_with_sso       = "enable"
@@ -19,15 +19,15 @@ resource "fortisase_endpoint_connection_profiles" "sase_standard" {
   }
   on_fabric_rule_set = {
     datasource  = "endpoint/on-net-rules"
-    primary_key = fortisase_endpoint_on_net_rules.on_net.primary_key
+    primary_key = fortisase_endpoint_on_net_rule.on_net.primary_key
   }
   endpoint_on_net_bypass = true
 }
 
 # Protection
 
-resource "fortisase_endpoint_protection_profiles" "sase_standard" {
-  primary_key        = fortisase_endpoint_policies.sase_standard.primary_key
+resource "fortisase_endpoint_protection_profile" "sase_standard" {
+  primary_key        = fortisase_endpoint_policy.sase_standard.primary_key
   antivirus          = "disable"
   antiransomware     = "disable"
   vulnerability_scan = "enable"
@@ -40,13 +40,12 @@ resource "fortisase_endpoint_protection_profiles" "sase_standard" {
   automatic_vulnerability_patch_level = "medium"
   default_action                      = "monitor"
   notify_endpoint_of_blocks           = "enable"
-  depends_on = [ fortisase_endpoint_connection_profiles.sase_standard ]
 }
 
 # Sandbox
 
-resource "fortisase_endpoint_sandbox_profiles" "sase_standard" {
-  primary_key                      = fortisase_endpoint_policies.sase_standard.primary_key
+resource "fortisase_endpoint_sandbox_profile" "sase_standard" {
+  primary_key                      = fortisase_endpoint_policy.sase_standard.primary_key
   sandbox_mode                     = "FortiSASE"
   timeout_awaiting_sandbox_results = 300
   file_submission_options = {
@@ -68,8 +67,8 @@ resource "fortisase_endpoint_sandbox_profiles" "sase_standard" {
 
 # Forticlient GUI settings
 
-resource "fortisase_endpoint_setting_profiles" "sase_standard" {
-  primary_key             = fortisase_endpoint_policies.sase_standard.primary_key
+resource "fortisase_endpoint_setting_profile" "sase_standard" {
+  primary_key             = fortisase_endpoint_policy.sase_standard.primary_key
   allow_config_backup     = "disable"
   show_tag_forti_client   = "enable"
   show_notifications      = "disable"
